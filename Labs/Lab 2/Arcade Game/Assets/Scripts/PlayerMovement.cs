@@ -8,6 +8,19 @@ public class PlayerMovement : MonoBehaviour
     [SerializeField] bool canJump = false;
     [SerializeField] float speed;
     [SerializeField] float jumpForce;
+    [SerializeField] InputActionReference moveAction;
+
+    private void OnEnable()
+    {
+        moveAction.action.Enable();
+    }
+
+    private void OnDisable()
+    {
+        moveAction.action.Disable();
+    }
+
+
     // Start is called once before the first execution of Update after the MonoBehaviour is created
     void Start()
     {
@@ -17,8 +30,9 @@ public class PlayerMovement : MonoBehaviour
     // Update is called once per frame
     void Update()
     {
-        float moveHorizontal = Input.GetAxisRaw("Horizontal"); // Moving left and right code
-        rb2DPlayer.linearVelocityX = moveHorizontal * speed;
+        Vector2 move = moveAction.action.ReadValue<Vector2>();
+        rb2DPlayer.linearVelocityX = move.x * speed;
+
 
         if (rb2DPlayer.linearVelocityX < 0)
             GetComponent<SpriteRenderer>().flipX = true;
@@ -32,6 +46,8 @@ public class PlayerMovement : MonoBehaviour
             rb2DPlayer.linearVelocityY += jumpForce;
             canJump = false;
         }
+
+        
     }
 
     private void OnCollisionStay2D(Collision2D other) // Making player able to jump only if they are touching the ground

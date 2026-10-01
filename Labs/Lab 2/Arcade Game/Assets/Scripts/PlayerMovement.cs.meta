@@ -5,6 +5,7 @@ MonoImporter:
   serializedVersion: 2
   defaultReferences:
   - moveAction: {fileID: -8239837592666096617, guid: fc9b72e931789074d99cf8a2eca82326, type: 3}
+  - jumpAction: {fileID: 9127836516657620315, guid: fc9b72e931789074d99cf8a2eca82326, type: 3}
   executionOrder: 0
   icon: {instanceID: 0}
   userData: 

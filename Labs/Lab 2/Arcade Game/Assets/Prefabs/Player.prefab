@@ -142,6 +142,7 @@ MonoBehaviour:
   speed: 4
   jumpForce: 7
   moveAction: {fileID: -8239837592666096617, guid: fc9b72e931789074d99cf8a2eca82326, type: 3}
+  jumpAction: {fileID: 9127836516657620315, guid: fc9b72e931789074d99cf8a2eca82326, type: 3}
 --- !u!114 &8288316966574333460
 MonoBehaviour:
   m_ObjectHideFlags: 0

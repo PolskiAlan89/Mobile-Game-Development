@@ -1,2 +1,15 @@
 fileFormatVersion: 2
 guid: 14555bb4b02e2944293a0c1bce1dfd88
+MonoImporter:
+  externalObjects: {}
+  serializedVersion: 2
+  defaultReferences:
+  - meleeHitbox: {instanceID: 0}
+  - lightningHitbox: {instanceID: 0}
+  - fireAction: {fileID: 8563525392856637335, guid: fc9b72e931789074d99cf8a2eca82326, type: 3}
+  - lightningAction: {fileID: -5365135336283290901, guid: fc9b72e931789074d99cf8a2eca82326, type: 3}
+  executionOrder: 0
+  icon: {instanceID: 0}
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 

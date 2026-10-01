@@ -1,5 +1,6 @@
 using System.Threading;
 using UnityEngine;
+using UnityEngine.InputSystem;
 
 public class PlayerActions : MonoBehaviour
 {
@@ -10,12 +11,26 @@ public class PlayerActions : MonoBehaviour
     [SerializeField] bool canShoot;
     [SerializeField] float meleeTimer;
     [SerializeField] float lightningTimer;
+    [SerializeField] InputActionReference fireAction;
+    [SerializeField] InputActionReference lightningAction;
 
     float meleeCooldown = 0.5f;
     float lightningVisualCooldown = 0.5f;
     float lightningAttackCooldown = 5.0f;
     float meleeHitboxOffset = 1.25f;
     float lightningHitboxOffset = 2.7f;
+
+    private void OnEnable()
+    {
+        fireAction.action.Enable();
+        lightningAction.action.Enable();
+    }
+
+    private void OnDisable()
+    {
+        fireAction.action.Disable();
+        lightningAction.action.Disable();
+    }
 
     // Start is called once before the first execution of Update after the MonoBehaviour is created
     void Start()
@@ -30,7 +45,7 @@ public class PlayerActions : MonoBehaviour
         meleeTimer += Time.deltaTime;
         lightningTimer += Time.deltaTime;
 
-        if (Input.GetButtonDown("Fire1") && canAttack == true && GetComponent<SpriteRenderer>().flipX == false) // Code for attacking melee attack
+        if (fireAction.action.WasPressedThisFrame() && canAttack == true && GetComponent<SpriteRenderer>().flipX == false) // Code for attacking melee attack
         {
             meleeTimer = 0;
             Vector2 hitboxPosition = new(this.gameObject.transform.position.x + meleeHitboxOffset, this.gameObject.transform.position.y);
@@ -38,7 +53,7 @@ public class PlayerActions : MonoBehaviour
             meleeHitbox.SetActive(true);
             canAttack = false;
         }
-        else if (Input.GetButtonDown("Fire1") && canAttack == true && GetComponent<SpriteRenderer>().flipX == true)
+        else if (fireAction.action.WasPressedThisFrame() && canAttack == true && GetComponent<SpriteRenderer>().flipX == true)
         {
             meleeTimer = 0;
             Vector2 hitboxPosition = new(this.gameObject.transform.position.x - meleeHitboxOffset, this.gameObject.transform.position.y);
@@ -47,7 +62,7 @@ public class PlayerActions : MonoBehaviour
             canAttack = false;
         }
 
-        if (Input.GetButtonDown("Fire2") && canShoot == true && GetComponent<SpriteRenderer>().flipX == false) // Code for attacking with lightning attack
+        if (lightningAction.action.WasPerformedThisFrame() && canShoot == true && GetComponent<SpriteRenderer>().flipX == false) // Code for attacking with lightning attack
         {
             lightningTimer = 0;
             Vector2 lightningHitboxPosition = new(this.gameObject.transform.position.x + lightningHitboxOffset, this.gameObject.transform.position.y);
@@ -55,7 +70,7 @@ public class PlayerActions : MonoBehaviour
             lightningHitbox.SetActive(true);
             canShoot = false;
         }
-        else if (Input.GetButtonDown("Fire2") && canShoot == true && GetComponent<SpriteRenderer>().flipX == true) // Code for attacking with lightning attack
+        else if (lightningAction.action.WasPerformedThisFrame() && canShoot == true && GetComponent<SpriteRenderer>().flipX == true) // Code for attacking with lightning attack
         {
             lightningTimer = 0;
             Vector2 lightningHitboxPosition = new(this.gameObject.transform.position.x - lightningHitboxOffset, this.gameObject.transform.position.y);

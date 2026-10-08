@@ -1,6 +1,9 @@
 using System.Data;
 using TMPro;
 using UnityEngine;
+using UnityEngine.InputSystem.EnhancedTouch;
+using Touch = UnityEngine.InputSystem.EnhancedTouch.Touch;
+using TouchPhase = UnityEngine.InputSystem.TouchPhase;
 
 public class UIManager : MonoBehaviour
 {
@@ -23,10 +26,23 @@ public class UIManager : MonoBehaviour
     Vector2 enemySpawn3 = new Vector2(0, 7);
     float spawnTimer;
     float spawnCooldown = 3.0f;
+
+    private void OnEnable()
+    {
+        EnhancedTouchSupport.Enable();
+        TouchSimulation.Enable();
+    }
+
+    private void OnDisable()
+    {
+        EnhancedTouchSupport.Disable();
+        TouchSimulation.Disable();
+    }
+
     // Start is called once before the first execution of Update after the MonoBehaviour is created
     void Start()
     {
-        enterText.text = "Press Enter to Begin";
+        enterText.text = "Tap to Begin";
         isGamePlaying = false;
         player = PlayerManager.instance.gameObject;
         tempCamera.SetActive(true);
@@ -42,11 +58,14 @@ public class UIManager : MonoBehaviour
             highscore = score;
         }
 
-        if (!isGamePlaying && Input.GetButtonDown("Submit")) // Game starts once enter is pressed
+        foreach (var touch in Touch.activeTouches)
         {
-            isGamePlaying = true;
-            tempCamera.SetActive(false);
-            Instantiate(player, playerSpawn, Quaternion.identity);
+            if (!isGamePlaying && touch.phase == TouchPhase.Ended) // Game starts once enter is pressed
+            {
+                isGamePlaying = true;
+                tempCamera.SetActive(false);
+                Instantiate(player, playerSpawn, Quaternion.identity);
+            }
         }
 
         if (isGamePlaying)
@@ -66,7 +85,7 @@ public class UIManager : MonoBehaviour
         {
             isGamePlaying = false;
             tempCamera.SetActive(true);
-            enterText.text = "Game Over! Press Enter to Begin";
+            enterText.text = "Game Over! Tap to Begin";
             score = 0;
         }
 

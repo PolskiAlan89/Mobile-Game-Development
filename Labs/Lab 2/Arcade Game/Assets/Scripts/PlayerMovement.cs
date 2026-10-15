@@ -25,12 +25,14 @@ public class PlayerMovement : MonoBehaviour
     // Start is called once before the first execution of Update after the MonoBehaviour is created
     void Start()
     {
-        rb2DPlayer = GetComponent<Rigidbody2D>();
+
     }
 
     // Update is called once per frame
     void Update()
     {
+        rb2DPlayer = GetComponent<Rigidbody2D>();
+
         Vector2 move = moveAction.action.ReadValue<Vector2>(); // Allow player to move left and right
         rb2DPlayer.linearVelocityX = move.x * speed;
 

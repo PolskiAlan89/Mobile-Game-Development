@@ -25,7 +25,10 @@ public class UIManager : MonoBehaviour
     Vector2 enemySpawn2 = new Vector2(16, 4);
     Vector2 enemySpawn3 = new Vector2(0, 7);
     float spawnTimer;
-    float spawnCooldown = 3.0f;
+    float spawnCooldown = 1.0f;
+
+    float smoothedDelta = 1f / 30f;
+    GUIStyle style;
 
     private void OnEnable()
     {
@@ -37,6 +40,11 @@ public class UIManager : MonoBehaviour
     {
         EnhancedTouchSupport.Disable();
         TouchSimulation.Disable();
+    }
+
+    private void Awake()
+    {
+        Application.targetFrameRate = 60;
     }
 
     // Start is called once before the first execution of Update after the MonoBehaviour is created
@@ -51,6 +59,7 @@ public class UIManager : MonoBehaviour
     // Update is called once per frame
     void Update()
     {
+        smoothedDelta += (Time.unscaledDeltaTime - smoothedDelta) * 0.1f;
 
         spawnTimer += Time.deltaTime;
 
@@ -93,6 +102,34 @@ public class UIManager : MonoBehaviour
         scoreText.text = "Score: " + score;
         healthText.text = "Health: " + PlayerManager.instance.playerHealth;
         highScoreText.text = "Highscore: " + highscore;
+    }
+
+    private void OnGUI()
+    {
+        if (style == null)
+        {
+            style = new GUIStyle(GUI.skin.box);
+            style.alignment = TextAnchor.UpperLeft;
+            style.normal.textColor = Color.white;
+        }
+
+        style.fontSize = Mathf.Max(14, Screen.height / 40);
+
+        float fps = 1f / smoothedDelta;
+        Resolution res = Screen.currentResolution;
+
+        string info =
+            $"FPS: {fps:0}\n" +
+            $"Device: {SystemInfo.deviceModel}\n" +
+            $"OS: {SystemInfo.operatingSystem}\n" +
+            $"Screen: {Screen.width} x {Screen.height} @ {res.refreshRateRatio.value:0} Hz\n" +
+            $"DPI: {Screen.dpi:0}\n" +
+            $"GPU: {SystemInfo.graphicsDeviceName} ({SystemInfo.graphicsMemorySize / 1000} GB)\n" +
+            $"RAM: {SystemInfo.systemMemorySize / 1000} GB\n";
+
+
+        Vector2 size = style.CalcSize(new GUIContent(info));
+        GUI.Label(new Rect(40, 40, size.x + 20, size.y + 20), info, style);
     }
 
     public void EnemyKill()

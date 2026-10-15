@@ -17,7 +17,6 @@ public class EnemyManager : MonoBehaviour
     // Start is called once before the first execution of Update after the MonoBehaviour is created
     void Start()
     {
-        rb2DEnemy = GetComponent<Rigidbody2D>();
         uiManager = FindFirstObjectByType<UIManager>();
         player = PlayerManager.instance?.gameObject;
     }
@@ -25,6 +24,8 @@ public class EnemyManager : MonoBehaviour
     // Update is called once per frame
     void Update()
     {
+        rb2DEnemy = GetComponent<Rigidbody2D>();
+
         if (this.gameObject.transform.position.x < player.transform.position.x) // Making enemy follow player depending if they're to the left or right of the enemy
         {
             rb2DEnemy.linearVelocityX = enemySpeed;

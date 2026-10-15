@@ -51,6 +51,7 @@ public class UIManager : MonoBehaviour
     // Update is called once per frame
     void Update()
     {
+
         spawnTimer += Time.deltaTime;
 
         if (score >= highscore) // Setting highscore
@@ -60,7 +61,7 @@ public class UIManager : MonoBehaviour
 
         foreach (var touch in Touch.activeTouches)
         {
-            if (!isGamePlaying && touch.phase == TouchPhase.Ended) // Game starts once enter is pressed
+            if (!isGamePlaying && touch.phase == TouchPhase.Ended) // Game starts once player taps on the screen
             {
                 isGamePlaying = true;
                 tempCamera.SetActive(false);

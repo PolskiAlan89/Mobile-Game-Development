@@ -17,14 +17,14 @@ public class EnemyManager : MonoBehaviour
     // Start is called once before the first execution of Update after the MonoBehaviour is created
     void Start()
     {
-        uiManager = FindFirstObjectByType<UIManager>();
-        player = PlayerManager.instance?.gameObject;
     }
 
     // Update is called once per frame
     void Update()
     {
         rb2DEnemy = GetComponent<Rigidbody2D>();
+        uiManager = FindFirstObjectByType<UIManager>();
+        player = PlayerManager.instance?.gameObject;
 
         if (this.gameObject.transform.position.x < player.transform.position.x) // Making enemy follow player depending if they're to the left or right of the enemy
         {

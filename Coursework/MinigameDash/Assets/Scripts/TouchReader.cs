@@ -6,16 +6,18 @@ using TouchPhase = UnityEngine.InputSystem.TouchPhase;
 public class TouchReader : MonoBehaviour
 {
 
-    const float minSwipeDp = 50f;
-    const float maxSwipeTime = 0.4f;
+    const float minSwipeDp = 20f;
+    const float maxSwipeTime = 1f;
     private void OnEnable()
     {
         EnhancedTouchSupport.Enable();
+        TouchSimulation.Enable();
     }
 
     private void OnDisable()
     {
         EnhancedTouchSupport.Disable();
+        TouchSimulation.Disable();
     }
 
     // Start is called once before the first execution of Update after the MonoBehaviour is created
@@ -31,7 +33,6 @@ public class TouchReader : MonoBehaviour
         {
             if (touch.phase == TouchPhase.Began)
             {
-                Debug.Log($"Finger {touch.finger.index} down");
                 CheckSwipe(touch);
             }
         }
@@ -50,6 +51,7 @@ public class TouchReader : MonoBehaviour
         }
 
         Vector2 delta = touch.screenPosition - touch.startScreenPosition;
+        Vector2 direction = Vector2.zero;
         float dpi = Screen.dpi > 0 ? Screen.dpi : 160f;
         float distanceDp = delta.magnitude / (dpi / 160f);
         float time = (float) (touch.time - touch.startTime);

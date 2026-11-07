@@ -1,3 +1,4 @@
+using Unity.VisualScripting;
 using UnityEngine;
 using UnityEngine.InputSystem.EnhancedTouch;
 using Touch = UnityEngine.InputSystem.EnhancedTouch.Touch;
@@ -8,6 +9,7 @@ public class TouchReader : MonoBehaviour
 
     const float minSwipeDp = 20f;
     const float maxSwipeTime = 1f;
+    Vector2 startPosition;
     private void OnEnable()
     {
         EnhancedTouchSupport.Enable();
@@ -33,6 +35,11 @@ public class TouchReader : MonoBehaviour
         {
             if (touch.phase == TouchPhase.Began)
             {
+                startPosition = touch.screenPosition;
+            }
+
+            if (touch.phase == TouchPhase.Moved)
+            {
                 CheckSwipe(touch);
             }
         }
@@ -40,23 +47,32 @@ public class TouchReader : MonoBehaviour
 
     void OnSwipe(Vector2 vector2)
     {
-        Debug.Log("Swiped");
+        switch (vector2.x, vector2.y)
+        {
+            case (1, 0):
+                Debug.Log("Swiped right");
+                    break;
+            case (0, 1):
+                Debug.Log("Swiped up");
+                break;
+            case (-1, 0):
+                Debug.Log("Swiped left");
+                break;
+            case (0, -1):
+                Debug.Log("Swiped down");
+                break;
+        }
     }
 
     void CheckSwipe(Touch touch)
     {
-        if (touch.phase != TouchPhase.Ended)
-        {
-            return;
-        }
-
         Vector2 delta = touch.screenPosition - touch.startScreenPosition;
         Vector2 direction = Vector2.zero;
         float dpi = Screen.dpi > 0 ? Screen.dpi : 160f;
         float distanceDp = delta.magnitude / (dpi / 160f);
         float time = (float) (touch.time - touch.startTime);
 
-        if (distanceDp > minSwipeDp || time > maxSwipeTime)
+        if (distanceDp < minSwipeDp || time > maxSwipeTime)
         {
             return;
         }

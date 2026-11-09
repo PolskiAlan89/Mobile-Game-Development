@@ -10,6 +10,8 @@ public class TouchReader : MonoBehaviour
     const float minSwipeDp = 20f;
     const float maxSwipeTime = 1f;
     Vector2 startPosition;
+    int randomPosition;
+
     private void OnEnable()
     {
         EnhancedTouchSupport.Enable();
@@ -25,7 +27,7 @@ public class TouchReader : MonoBehaviour
     // Start is called once before the first execution of Update after the MonoBehaviour is created
     void Start()
     {
-        
+        randomPosition = Random.Range(0, 3);
     }
 
     // Update is called once per frame

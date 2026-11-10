@@ -4,13 +4,14 @@ using UnityEngine.InputSystem.EnhancedTouch;
 using Touch = UnityEngine.InputSystem.EnhancedTouch.Touch;
 using TouchPhase = UnityEngine.InputSystem.TouchPhase;
 
-public class TouchReader : MonoBehaviour
+public class SwipeMinigame : MonoBehaviour
 {
 
-    const float minSwipeDp = 20f;
+    const float minSwipeDp = 50f;
     const float maxSwipeTime = 1f;
     Vector2 startPosition;
     int randomPosition;
+    long score;
 
     private void OnEnable()
     {
@@ -53,7 +54,7 @@ public class TouchReader : MonoBehaviour
         {
             case (1, 0):
                 Debug.Log("Swiped right");
-                    break;
+                break;
             case (0, 1):
                 Debug.Log("Swiped up");
                 break;

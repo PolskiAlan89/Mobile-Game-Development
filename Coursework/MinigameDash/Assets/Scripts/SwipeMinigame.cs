@@ -1,3 +1,5 @@
+using System.Collections;
+using TMPro;
 using Unity.VisualScripting;
 using UnityEngine;
 using UnityEngine.InputSystem.EnhancedTouch;
@@ -11,7 +13,9 @@ public class SwipeMinigame : MonoBehaviour
     const float maxSwipeTime = 1f;
     Vector2 startPosition;
     int randomPosition;
-    long score;
+    int score;
+    public TextMeshProUGUI swipeDirection;
+    public TextMeshProUGUI scoreText;
 
     private void OnEnable()
     {
@@ -28,7 +32,7 @@ public class SwipeMinigame : MonoBehaviour
     // Start is called once before the first execution of Update after the MonoBehaviour is created
     void Start()
     {
-        randomPosition = Random.Range(0, 3);
+        ShowDirection();
     }
 
     // Update is called once per frame
@@ -46,6 +50,29 @@ public class SwipeMinigame : MonoBehaviour
                 CheckSwipe(touch);
             }
         }
+
+        scoreText.text = "Score: " + score;
+    }
+
+    void ShowDirection()
+    {
+        randomPosition = Random.Range(0, 4);
+        if (randomPosition == 0)
+        {
+            swipeDirection.text = "Swipe Right";
+        }
+        else if (randomPosition == 1)
+        {
+            swipeDirection.text = "Swipe Up";
+        }
+        else if (randomPosition == 2)
+        {
+            swipeDirection.text = "Swipe Left";
+        }
+        else if (randomPosition == 3)
+        {
+            swipeDirection.text = "Swipe Down";
+        }
     }
 
     void OnSwipe(Vector2 vector2)
@@ -53,15 +80,35 @@ public class SwipeMinigame : MonoBehaviour
         switch (vector2.x, vector2.y)
         {
             case (1, 0):
+                if (randomPosition == 0)
+                {
+                    ShowDirection();
+                    score++;
+                }
                 Debug.Log("Swiped right");
                 break;
             case (0, 1):
+                if (randomPosition == 1)
+                {
+                    ShowDirection();
+                    score++;
+                }
                 Debug.Log("Swiped up");
                 break;
             case (-1, 0):
+                if (randomPosition == 2)
+                {
+                    ShowDirection();
+                    score++;
+                }
                 Debug.Log("Swiped left");
                 break;
             case (0, -1):
+                if (randomPosition == 3)
+                {
+                    ShowDirection();
+                    score++;
+                }
                 Debug.Log("Swiped down");
                 break;
         }

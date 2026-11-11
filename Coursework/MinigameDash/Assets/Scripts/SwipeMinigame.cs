@@ -11,7 +11,6 @@ public class SwipeMinigame : MonoBehaviour
 
     const float minSwipeDp = 50f;
     const float maxSwipeTime = 1f;
-    Vector2 startPosition;
     int randomPosition;
     int score;
     public TextMeshProUGUI swipeDirection;
@@ -40,12 +39,12 @@ public class SwipeMinigame : MonoBehaviour
     {
         foreach (var touch in Touch.activeTouches)
         {
-            if (touch.phase == TouchPhase.Began)
-            {
-                startPosition = touch.screenPosition;
-            }
+            //if (touch.phase == TouchPhase.Began)
+            //{
+            //    startPosition = touch.screenPosition;
+            //}
 
-            if (touch.phase == TouchPhase.Moved)
+            if (touch.phase == TouchPhase.Moved) // Check if finger has moved
             {
                 CheckSwipe(touch);
             }
@@ -54,7 +53,7 @@ public class SwipeMinigame : MonoBehaviour
         scoreText.text = "Score: " + score;
     }
 
-    void ShowDirection()
+    void ShowDirection() // Determining which direction should be next
     {
         randomPosition = Random.Range(0, 4);
         if (randomPosition == 0)
@@ -75,7 +74,7 @@ public class SwipeMinigame : MonoBehaviour
         }
     }
 
-    void OnSwipe(Vector2 vector2)
+    void OnSwipe(Vector2 vector2) // Giving score if player swipes in the right direction
     {
         switch (vector2.x, vector2.y)
         {
@@ -114,20 +113,19 @@ public class SwipeMinigame : MonoBehaviour
         }
     }
 
-    void CheckSwipe(Touch touch)
+    void CheckSwipe(Touch touch) // Checks if finger has swiped to a direction
     {
         Vector2 delta = touch.screenPosition - touch.startScreenPosition;
-        Vector2 direction = Vector2.zero;
         float dpi = Screen.dpi > 0 ? Screen.dpi : 160f;
         float distanceDp = delta.magnitude / (dpi / 160f);
         float time = (float) (touch.time - touch.startTime);
 
-        if (distanceDp < minSwipeDp || time > maxSwipeTime)
+        if (distanceDp < minSwipeDp || time > maxSwipeTime) // If the player swipes too little or takes too long to swipe the code doesn't run
         {
             return;
         }
 
-        if (Mathf.Abs(delta.x) > Mathf.Abs(delta.y))
+        if (Mathf.Abs(delta.x) > Mathf.Abs(delta.y)) // Checking which direction has been swiped
         {
             OnSwipe(delta.x > 0 ? Vector2.right : Vector2.left);
         }

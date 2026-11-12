@@ -16,8 +16,8 @@ public class UIManager : MonoBehaviour
 
     }
 
-    public void ChangeMinigame()
+    public void ChangeMinigame(int sceneID)
     {
-        SceneManager.LoadScene("SwipeMinigame");
+        SceneManager.LoadScene(sceneID);
     }
 }

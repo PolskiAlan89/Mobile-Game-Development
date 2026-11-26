@@ -52,6 +52,7 @@ public class SwipeMinigame : MonoBehaviour
         if (timer >= failTime && canGetScore)
         {
             swipeDirection.text = "Game Over! Too Slow!";
+            randomPosition = 4;
         }
 
         foreach (var touch in Touch.activeTouches)
@@ -104,6 +105,12 @@ public class SwipeMinigame : MonoBehaviour
                     swipeDirection.text = "Great Job!";
                     score++;
                 }
+                else if (randomPosition == 4)
+                {
+                    score = 0;
+                    timer = 0;
+                    ShowDirection();
+                }
                 Debug.Log("Swiped right");
                 break;
             case (0, 1):
@@ -113,6 +120,12 @@ public class SwipeMinigame : MonoBehaviour
                     timer = 0;
                     swipeDirection.text = "Great Job!";
                     score++;
+                }
+                else if (randomPosition == 4)
+                {
+                    score = 0;
+                    timer = 0;
+                    ShowDirection();
                 }
                 Debug.Log("Swiped up");
                 break;
@@ -124,6 +137,12 @@ public class SwipeMinigame : MonoBehaviour
                     swipeDirection.text = "Great Job!";
                     score++;
                 }
+                else if (randomPosition == 4)
+                {
+                    score = 0;
+                    timer = 0;
+                    ShowDirection();
+                }
                 Debug.Log("Swiped left");
                 break;
             case (0, -1):
@@ -133,6 +152,12 @@ public class SwipeMinigame : MonoBehaviour
                     timer = 0;
                     swipeDirection.text = "Great Job!";
                     score++;
+                }
+                else if (randomPosition == 4)
+                {
+                    score = 0;
+                    timer = 0;
+                    ShowDirection();
                 }
                 Debug.Log("Swiped down");
                 break;

@@ -1,0 +1,121 @@
+// Desktop harness for the Week 9 platform logic: drives PlatformHub, PendingSubmissions, PlatformIds and
+// AchievementTracker on plain .NET with the Null back end as a controllable fake. Run with `dotnet run`.
+using System; using System.IO; using System.Linq; using System.Reflection; using System.Collections.Generic; using UnityEngine; using CMP5402.Week9;
+
+class ThrowingServices : IPlatformServices {
+  public string Name => "Null"; public bool IsAvailable => true; public bool IsSignedIn => true; public bool IsUnderage => false;
+  public void SignIn(bool i, Action<bool> d) => d(true);
+  public void SubmitScore(string id, long s, Action<bool> d) => throw new InvalidOperationException("plug-in exploded");
+  public void ReportProgress(string id, int s, int t, Action<bool> d) => throw new InvalidOperationException("plug-in exploded");
+  public void ShowLeaderboard(string id) {} public void ShowAchievements() {}
+}
+
+class P {
+  static int fails;
+  static void Check(bool ok, string what) { Console.WriteLine((ok ? "  PASS " : "  FAIL ") + what); if (!ok) fails++; }
+  static void Call(object o, string m, params object[] a) => o.GetType().GetMethod(m, BindingFlags.Instance | BindingFlags.NonPublic | BindingFlags.Public).Invoke(o, a);
+
+  static PlatformIds Ids() {
+    var ids = ScriptableObject.CreateInstance<PlatformIds>();
+    ids.achievements = new[] {
+      new PlatformIds.Achievement { logicalId = "first_clear", playGamesId = "CgkI-first", gameCenterId = "gc.first" },
+      new PlatformIds.Achievement { logicalId = "world_one", playGamesId = "CgkI-world", gameCenterId = "gc.world" },
+      new PlatformIds.Achievement { logicalId = "speed_run", playGamesId = "CgkI-speed", gameCenterId = "" },
+      new PlatformIds.Achievement { logicalId = "hunter", playGamesId = "CgkI-hunter", gameCenterId = "gc.hunter", totalSteps = 100 } };
+    ids.leaderboards = new[] { new PlatformIds.Leaderboard { logicalId = "fastest_level", playGamesId = "CgkI-fast", gameCenterId = "gc.fast", lowerIsBetter = true },
+                               new PlatformIds.Leaderboard { logicalId = "high_score", playGamesId = "CgkI-high", gameCenterId = "gc.high" } };
+    return ids;
+  }
+  static (PlatformHub hub, NullPlatformServices svc) Hub(string dir, PlatformIds ids) {
+    var svc = new NullPlatformServices(); var hub = new PlatformHub(); hub.ConfigureForTesting(ids, svc, dir); return (hub, svc);
+  }
+
+  static void Main() {
+    string root = Path.Combine(Path.GetTempPath(), "w9sim"); if (Directory.Exists(root)) Directory.Delete(root, true); Directory.CreateDirectory(root);
+    var ids = Ids();
+
+    Console.WriteLine("A. logical id -> platform id mapping");
+    Check(ids.ResolveAchievement("first_clear", "PlayGames") == "CgkI-first" && ids.ResolveAchievement("first_clear", "GameCenter") == "gc.first", "both columns resolve");
+    Check(ids.ResolveAchievement("first_clear", "Null") == "first_clear", "the Null back end uses the logical id");
+    Check(ids.ResolveAchievement("speed_run", "GameCenter") == null && ids.ResolveAchievement("nope", "PlayGames") == null, "an empty column and an unknown id both resolve to null");
+    Check(ids.ResolveLeaderboard("fastest_level", "PlayGames") == "CgkI-fast" && ids.FindLeaderboard("fastest_level").lowerIsBetter, "leaderboard mapping and lowerIsBetter");
+    { var (hub, svc) = Hub(Path.Combine(root, "a"), ids); svc.SignIn(false, _ => { }); Debug.Warnings.Clear();
+      hub.UnlockAchievement("not_in_the_asset"); hub.SubmitScore("no_board", 5);
+      Check(hub.Queue.Count == 0 && svc.Sent.Count == 0 && Debug.Warnings.Count == 2 && Debug.Warnings.All(w => w.Contains("no Null id")), "unknown ids: warning logged, nothing queued, nothing sent, no exception"); }
+
+    Console.WriteLine("B. queue de-duplication rules and the file");
+    { string dir = Path.Combine(root, "b"); var q = new PendingSubmissions(dir);
+      Check(q.Enqueue(Submission.Score("high", 900)) && !q.Enqueue(Submission.Score("high", 500)) && q.Enqueue(Submission.Score("high", 950)) && q.Items[0].value == 950, "score keeps the best (higher)");
+      Check(q.Enqueue(Submission.Score("fast", 30000, true)) && !q.Enqueue(Submission.Score("fast", 45000, true)) && q.Enqueue(Submission.Score("fast", 12300, true)) && q.Items[1].value == 12300, "lowerIsBetter keeps the lowest");
+      Check(q.Enqueue(Submission.Progress("hunter", 10, 100)) && !q.Enqueue(Submission.Progress("hunter", 5, 100)) && q.Enqueue(Submission.Progress("hunter", 20, 100)) && q.Items[2].value == 20, "progress keeps the highest absolute count");
+      Check(q.Enqueue(Submission.Progress("first", 1, 0)) && !q.Enqueue(Submission.Progress("first", 1, 0)) && q.Count == 4, "an unlock is queued once");
+      string json = File.ReadAllText(q.Path_).Replace(" ", "").Replace("\n", "");
+      Check(json.Contains("\"platformId\":\"hunter\"") && json.Contains("\"value\":20") && File.Exists(q.Path_ + ".bak") && Directory.GetFiles(dir, "*.tmp").Length == 0, "file holds the entries; .bak kept; no temp files left");
+      var q2 = new PendingSubmissions(dir); Check(q2.Count == 4 && q2.Items.Any(s => s.platformId == "fast" && s.lowerIsBetter && s.value == 12300), "a fresh instance reloads every entry with its flags"); }
+
+    Console.WriteLine("C. offline first, then sign-in: everything sent exactly once, in order");
+    { var (hub, svc) = Hub(Path.Combine(root, "c"), ids); svc.SimulateSignedOut = true; hub.SignIn(false);
+      hub.UnlockAchievement("first_clear"); hub.SubmitScore("fastest_level", 12300); hub.ReportProgress("hunter", 10); hub.UnlockAchievement("first_clear");
+      Check(!hub.IsSignedIn && hub.Queue.Count == 3 && svc.Sent.Count == 0, "declined sign-in: three entries queued on disk, nothing sent");
+      svc.SimulateSignedOut = false; hub.SignIn(true);
+      Check(hub.IsSignedIn && hub.Queue.Count == 0 && svc.Sent.SequenceEqual(new[] { "progress:first_clear=1/0", "score:fastest_level=12300", "progress:hunter=10/100" }), "sign-in flushes in order, each once: " + string.Join(" | ", svc.Sent));
+      var again = new PendingSubmissions(Path.Combine(root, "c")); Check(again.Count == 0, "the file is empty after the flush"); }
+
+    Console.WriteLine("D. send failures: one attempt per trigger, parked at the cap, retry brings it back");
+    { var (hub, svc) = Hub(Path.Combine(root, "d"), ids); hub.SignIn(false); svc.SimulateFailures = true;
+      hub.SubmitScore("high_score", 100);
+      Check(hub.Queue.Count == 1 && hub.Queue.Items[0].attempts == 1 && !hub.Queue.IsFlushing, "first send failed: attempts 1, nothing in flight");
+      for (int i = 0; i < 3; i++) hub.OnReachabilityRegained();
+      Check(hub.Queue.Items[0].attempts == 4 && !hub.Queue.Items[0].parked, "three more triggers: attempts 4, not parked yet");
+      hub.OnReachabilityRegained(); Check(hub.Queue.Items[0].parked && hub.Queue.ParkedCount == 1, "fifth failure parks the item");
+      hub.OnReachabilityRegained(); svc.SimulateFailures = false; hub.OnReachabilityRegained();
+      Check(hub.Queue.Count == 1 && svc.Sent.Count == 0, "a parked item is skipped even when the back end works again");
+      hub.Queue.RetryParked(); hub.OnReachabilityRegained(); Check(hub.Queue.Count == 0 && svc.Sent.Count == 1, "RetryParked then a trigger sends it");
+      svc.SimulateFailures = true; hub.SubmitScore("high_score", 200); svc.SimulateFailures = false; hub.SubmitScore("high_score", 300);
+      Check(hub.Queue.Count == 0 && svc.BestScores["high_score"] == 300 && svc.Sent.Count == 2, "a better score replaces a failed one and resets its attempts"); }
+
+    Console.WriteLine("E. simulated crash mid-write: stray temp ignored, corrupt main falls back to .bak");
+    { string dir = Path.Combine(root, "e"); var q = new PendingSubmissions(dir); q.Enqueue(Submission.Score("high", 1)); q.Enqueue(Submission.Score("high", 2));
+      File.WriteAllText(Path.Combine(dir, "pending_submissions.json.deadbeef.tmp"), "{\"items\":[{\"kind\":\"score\",\"platformId\":\"GHOST\"");
+      var q2 = new PendingSubmissions(dir); Check(q2.Count == 1 && q2.Items[0].value == 2, "a half-written temp file is ignored");
+      File.WriteAllText(q.Path_, "{ corrupt"); Debug.Warnings.Clear();
+      var q3 = new PendingSubmissions(dir); Check(q3.Count == 1 && q3.Items[0].value == 1 && Debug.Warnings.Count == 1, "a corrupt main file: previous version loaded from .bak, one warning");
+      File.Delete(q.Path_); File.Delete(q.Path_ + ".bak"); var q4 = new PendingSubmissions(dir); Check(q4.Count == 0, "no files at all: empty queue, no exception"); }
+
+    Console.WriteLine("F. tracker: events in, logical ids out, local truth first");
+    { var (hub, svc) = Hub(Path.Combine(root, "f"), ids); hub.SignIn(false); var prog = new ProgressRecord(); int saves = 0; var t = new AchievementTracker(hub, prog, () => saves++); var unlocked = new List<string>(); t.Unlocked += unlocked.Add;
+      t.OnLevelCompleted(1, 45f); t.OnLevelCompleted(2, 12.3f);
+      Check(unlocked.SequenceEqual(new[] { "first_clear", "speed_run" }) && prog.unlocked.Count == 2 && svc.Progress["first_clear"] == 100 && svc.Progress["speed_run"] == 100, "first_clear once, speed_run under 30 s");
+      Check(svc.Sent.Contains("score:fastest_level=45000") && svc.Sent.Contains("score:fastest_level=12300") && prog.bestLevelTimeMs == 12300, "both times submitted (the platform keeps its best); local best kept");
+      for (int i = 0; i < 25; i++) t.OnEnemyDefeated();
+      Check(svc.Sent.Count(s => s.StartsWith("progress:hunter")) == 2 && svc.Progress["hunter"] == 20 && prog.enemiesDefeated == 25, "hunter reported in batches of ten as an absolute count (10, 20), 20% on the platform");
+      Check(saves == 4, "save requested on each level and each batch: " + saves);
+      t.OnLevelCompleted(10, 60f); Check(prog.unlocked.Contains("world_one") && unlocked.Count == 3, "world_one at level 10; first_clear not raised again");
+      int before = svc.Sent.Count; t.Resync();
+      Check(svc.Sent.Count == before + 5 && prog.unlocked.Count == 3 && svc.Progress["hunter"] == 25, "resync re-sends three unlocks, the exact counter (25, not the last batch) and the best time; local state unchanged (sent " + (svc.Sent.Count - before) + ": " + string.Join(" | ", svc.Sent.Skip(before)) + ")");
+      var gcIds = Ids(); var (hub2, svc2) = Hub(Path.Combine(root, "f2"), gcIds); hub2.SignIn(false);
+      var t2 = new AchievementTracker(hub2, new ProgressRecord()); t2.OnLevelCompleted(1, 12f);
+      Check(svc2.Sent.Count == 3, "a platform column that is empty for one id does not stop the others (Null column always resolves)"); }
+
+    Console.WriteLine("G. flush triggers: resume and reachability regained");
+    { var (hub, svc) = Hub(Path.Combine(root, "g"), ids); hub.SignIn(false); svc.SimulateFailures = true; hub.SubmitScore("high_score", 7); svc.SimulateFailures = false;
+      Check(hub.Queue.Count == 1, "queued while the send failed");
+      Call(hub, "OnApplicationFocus", true); Check(hub.Queue.Count == 0, "OnApplicationFocus(true) flushes");
+      svc.SimulateFailures = true; hub.SubmitScore("high_score", 8); svc.SimulateFailures = false;
+      Call(hub, "OnApplicationPause", false); Check(hub.Queue.Count == 0, "OnApplicationPause(false) flushes");
+      svc.SimulateFailures = true; hub.SubmitScore("high_score", 9); svc.SimulateFailures = false;
+      Application.internetReachability = NetworkReachability.NotReachable; Time.unscaledDeltaTime = 6f; Call(hub, "Update");
+      Check(hub.Queue.Count == 1, "poll sees no network: nothing flushed");
+      Application.internetReachability = NetworkReachability.ReachableViaCarrierDataNetwork; Call(hub, "Update");
+      Check(hub.Queue.Count == 0, "poll sees the network return: flushed"); }
+
+    Console.WriteLine("H. a back end that throws cannot wedge the queue");
+    { string dir = Path.Combine(root, "h"); var q = new PendingSubmissions(dir); q.Enqueue(Submission.Score("x", 1)); Debug.Warnings.Clear();
+      q.Flush(new ThrowingServices());
+      Check(q.Count == 1 && q.Items[0].attempts == 1 && !q.IsFlushing && Debug.Warnings.Count == 1, "exception caught, counted as a failed attempt, queue not stuck in flight");
+      var ok = new NullPlatformServices(); ok.SignIn(false, _ => { }); q.Flush(ok); Check(q.Count == 0, "a working back end then drains it"); }
+
+    Console.WriteLine(fails == 0 ? "ALL PASS" : fails + " FAILED");
+    Environment.ExitCode = fails == 0 ? 0 : 1;
+  }
+}

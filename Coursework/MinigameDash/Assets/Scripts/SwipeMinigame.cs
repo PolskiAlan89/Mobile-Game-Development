@@ -83,6 +83,7 @@ public class SwipeMinigame : MonoBehaviour
                 {
                     ShowDirection();
                     score++;
+                    ProgressStore.Instance.Tracker.OnEnemyDefeated();
                 }
                 Debug.Log("Swiped right");
                 break;
@@ -91,6 +92,7 @@ public class SwipeMinigame : MonoBehaviour
                 {
                     ShowDirection();
                     score++;
+                    ProgressStore.Instance.Tracker.OnEnemyDefeated();
                 }
                 Debug.Log("Swiped up");
                 break;
@@ -99,6 +101,7 @@ public class SwipeMinigame : MonoBehaviour
                 {
                     ShowDirection();
                     score++;
+                    ProgressStore.Instance.Tracker.OnEnemyDefeated();
                 }
                 Debug.Log("Swiped left");
                 break;
@@ -107,6 +110,7 @@ public class SwipeMinigame : MonoBehaviour
                 {
                     ShowDirection();
                     score++;
+                    ProgressStore.Instance.Tracker.OnEnemyDefeated();
                 }
                 Debug.Log("Swiped down");
                 break;

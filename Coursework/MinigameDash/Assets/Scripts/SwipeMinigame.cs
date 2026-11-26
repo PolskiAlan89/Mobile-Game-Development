@@ -13,6 +13,7 @@ public class SwipeMinigame : MonoBehaviour
     const float maxSwipeTime = 1f;
     float timer;
     float positionCooldown = 0.5f;
+    float failTime = 3f;
     int randomPosition;
     int score;
     bool canGetScore = true;
@@ -44,7 +45,13 @@ public class SwipeMinigame : MonoBehaviour
 
         if (timer >= positionCooldown && !canGetScore)
         {
+            timer = 0;
             ShowDirection();
+        }
+
+        if (timer >= failTime && canGetScore)
+        {
+            swipeDirection.text = "Game Over! Too Slow!";
         }
 
         foreach (var touch in Touch.activeTouches)

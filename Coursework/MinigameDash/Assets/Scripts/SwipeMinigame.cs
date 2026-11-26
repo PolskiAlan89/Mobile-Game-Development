@@ -11,8 +11,11 @@ public class SwipeMinigame : MonoBehaviour
 
     const float minSwipeDp = 50f;
     const float maxSwipeTime = 1f;
+    float timer;
+    float positionCooldown = 0.5f;
     int randomPosition;
     int score;
+    bool canGetScore = true;
     public TextMeshProUGUI swipeDirection;
     public TextMeshProUGUI scoreText;
 
@@ -37,6 +40,13 @@ public class SwipeMinigame : MonoBehaviour
     // Update is called once per frame
     void Update()
     {
+        timer += Time.deltaTime;
+
+        if (timer >= positionCooldown && !canGetScore)
+        {
+            ShowDirection();
+        }
+
         foreach (var touch in Touch.activeTouches)
         {
             //if (touch.phase == TouchPhase.Began)
@@ -56,6 +66,7 @@ public class SwipeMinigame : MonoBehaviour
     void ShowDirection() // Determining which direction should be next
     {
         randomPosition = Random.Range(0, 4);
+        canGetScore = true;
         if (randomPosition == 0)
         {
             swipeDirection.text = "Swipe Right";
@@ -79,33 +90,41 @@ public class SwipeMinigame : MonoBehaviour
         switch (vector2.x, vector2.y)
         {
             case (1, 0):
-                if (randomPosition == 0)
+                if (randomPosition == 0 && canGetScore)
                 {
-                    ShowDirection();
+                    canGetScore = false;
+                    timer = 0;
+                    swipeDirection.text = "Great Job!";
                     score++;
                 }
                 Debug.Log("Swiped right");
                 break;
             case (0, 1):
-                if (randomPosition == 1)
+                if (randomPosition == 1 && canGetScore)
                 {
-                    ShowDirection();
+                    canGetScore = false;
+                    timer = 0;
+                    swipeDirection.text = "Great Job!";
                     score++;
                 }
                 Debug.Log("Swiped up");
                 break;
             case (-1, 0):
-                if (randomPosition == 2)
+                if (randomPosition == 2 && canGetScore)
                 {
-                    ShowDirection();
+                    canGetScore = false;
+                    timer = 0;
+                    swipeDirection.text = "Great Job!";
                     score++;
                 }
                 Debug.Log("Swiped left");
                 break;
             case (0, -1):
-                if (randomPosition == 3)
+                if (randomPosition == 3 && canGetScore)
                 {
-                    ShowDirection();
+                    canGetScore = false;
+                    timer = 0;
+                    swipeDirection.text = "Great Job!";
                     score++;
                 }
                 Debug.Log("Swiped down");
